@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "CONFIRM: baseline-table extraction and arithmetic verification for randomized controlled trials"
+abstract: >-
+  A three-stage pipeline that harvests randomized controlled trials with full
+  text in PubMed Central, extracts baseline-characteristics tables into a flat
+  dataset, and applies the GRIM reachability test to reported means. Rows whose
+  measure type, sample size, or table structure cannot be established are
+  excluded and logged rather than guessed at.
+type: software
+authors:
+  - given-names: Alinur
+    family-names: Zaitkhan
+    orcid: "https://orcid.org/0009-0005-9793-9659"
+repository-code: "https://github.com/jdsaasa/CONFIRM"
+license: MIT
+version: 1.0.0
+date-released: "2026-07-31"
+keywords:
+  - randomized controlled trials
+  - baseline tables
+  - GRIM test
+  - data extraction
+  - research integrity
+  - PubMed Central

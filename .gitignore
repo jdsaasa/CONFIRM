@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+data/
+raw_papers/
+*.csv
+# Tracked exceptions: primary outputs plus the artifacts the docs point readers at.
+!extracted_data.csv
+!grim_results.csv
+!failed_papers.csv
+!unverified_cells.csv
+.env
