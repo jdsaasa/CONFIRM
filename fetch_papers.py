@@ -51,6 +51,15 @@ PUBMED_RESULT_CAP = 9999
 RESTRICTED_MARKER = "does not allow downloading of the full text"
 
 
+class BadRequestError(RuntimeError):
+    """A 400 from E-utilities: a rejected API key, or a record it will not serve.
+
+    Subclasses RuntimeError so the per-article handler in main() keeps catching
+    it and skips just that paper, while a 400 on the initial search surfaces as a
+    readable message instead of a traceback.
+    """
+
+
 class RateLimiter:
     """Blocks so that calls are spaced at least 1/rate seconds apart."""
 
@@ -109,6 +118,16 @@ class EutilsClient:
             else:
                 if resp.status_code == 200:
                     return resp.content
+                if resp.status_code == 400:
+                    # E-utilities answers a rejected API key with a bare 400, the
+                    # same status it uses for a record it will not serve. Which one
+                    # it is depends on whether anything has succeeded yet, so say
+                    # both rather than guess.
+                    raise BadRequestError(
+                        f"400 Bad Request from {endpoint}. If this is the first "
+                        f"request of the run, NCBI_API_KEY is likely invalid or "
+                        f"expired; if earlier requests succeeded, this particular "
+                        f"record is unavailable.")
                 if resp.status_code not in (429, 500, 502, 503, 504):
                     resp.raise_for_status()
                 last_error = requests.HTTPError(
@@ -267,15 +286,29 @@ def main() -> int:
     args.outdir.mkdir(parents=True, exist_ok=True)
 
     print(f"\nQuery: {args.query}")
-    pmids = search_pmids(client, args.query, args.retmax,
-                         mindate=args.mindate, maxdate=args.maxdate)
+    try:
+        pmids = search_pmids(client, args.query, args.retmax,
+                             mindate=args.mindate, maxdate=args.maxdate)
+    except BadRequestError as exc:
+        print(f"\nSearch failed: {exc}", file=sys.stderr)
+        if api_key:
+            print("Check the NCBI_API_KEY value in your environment, or unset it "
+                  "to run without a key at the lower rate.", file=sys.stderr)
+        return 1
+    except (RuntimeError, requests.HTTPError) as exc:
+        print(f"\nSearch failed: {exc}", file=sys.stderr)
+        return 1
     if not pmids:
         print("No records matched the query.")
         return 0
     print(f"Got {len(pmids)} PMIDs.\n")
 
     print("Converting PMIDs to PMCIDs...")
-    pmid_to_pmcid = map_to_pmcids(client, pmids)
+    try:
+        pmid_to_pmcid = map_to_pmcids(client, pmids)
+    except (RuntimeError, requests.HTTPError) as exc:
+        print(f"\nPMID-to-PMCID linking failed: {exc}", file=sys.stderr)
+        return 1
     unlinked = len(pmids) - len(pmid_to_pmcid)
     if unlinked:
         print(f"  {unlinked} PMIDs had no PMC record; skipping them.")
