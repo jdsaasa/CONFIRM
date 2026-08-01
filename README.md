@@ -1,5 +1,7 @@
 # CONFIRM
 
+[![DOI](https://zenodo.org/badge/1318297081.svg)](https://doi.org/10.5281/zenodo.21740555)
+
 Baseline-table extraction and arithmetic verification for randomized controlled
 trials with full text in PubMed Central.
 
