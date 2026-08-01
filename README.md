@@ -6,6 +6,12 @@ trials with full text in PubMed Central.
 The pipeline runs in three independent stages. Each writes CSV files that the next
 stage reads, so stages can be re-run separately.
 
+**Where output goes.** Every script writes to `results/`, which is gitignored. The
+CSVs at the repo root (`extracted_data.csv`, `grim_results.csv`,
+`failed_papers.csv`, `unverified_cells.csv`) are the committed record of the
+published 9,698-paper run and are never written to. Running the pipeline cannot
+overwrite them.
+
 ## Setup
 
 ```powershell
@@ -42,7 +48,8 @@ python fetch_papers.py --retmax 9999 --mindate 2024/01/01 --maxdate 2024/12/31
 
 PubMed serves at most 9,999 records per query, so larger harvests need
 `--mindate`/`--maxdate` to slice the query into date windows. Papers whose
-publisher blocks XML download are logged to `failed_papers.csv` and skipped.
+publisher blocks XML download are skipped and logged to
+`results/failed_papers.csv` with their PMCID, PMID, and reason.
 
 ### 2. Extract — `extract_tables.py`
 
@@ -56,14 +63,10 @@ python extract_tables.py
 
 | Output | Contents |
 | --- | --- |
-| `extracted_data.csv` | `pmcid, variable, group, n, mean, sd` |
-| `skipped_papers.csv` | every skipped paper with its reason |
-| `unverified_cells.csv` | ambiguous cells whose group has no sample size |
-| `borderline_rows.csv` | cells excluded as counts only by a precision-widened tolerance |
-
-All four are produced by running the stage. `extracted_data.csv` and
-`unverified_cells.csv` are committed as a record of the published run;
-`skipped_papers.csv` and `borderline_rows.csv` are regenerated locally.
+| `results/extracted_data.csv` | `pmcid, variable, group, n, mean, sd` |
+| `results/skipped_papers.csv` | every skipped paper with its reason |
+| `results/unverified_cells.csv` | ambiguous cells whose group has no sample size |
+| `results/borderline_rows.csv` | cells excluded as counts only by a precision-widened tolerance |
 
 `X (Y)` cells are ambiguous between mean (SD) and count (percent). Where the
 group's *n* is known, the two are separated arithmetically: if `(X ÷ n) × 100`
@@ -80,14 +83,26 @@ indicates a reporting error.
 python grim_check.py
 ```
 
-Writes `grim_results.csv` — every extracted row annotated with `measure_type`,
-`category` (`checked-flagged`, `checked-passed`, `not-applicable`), `reason`,
-`granularity`, and `nearest_achievable`.
+Writes `results/grim_results.csv` — every extracted row annotated with
+`measure_type`, `category` (`checked-flagged`, `checked-passed`,
+`not-applicable`), `reason`, `granularity`, and `nearest_achievable`.
 
 A row is only tested when its measure is known to be integer-valued, its sample
 size is known, and `n < 10^decimals` so the test has discriminating power.
-Everything else is excluded with a recorded reason. Because baseline tables are
-dominated by continuous measures, the testable fraction is small by construction.
+Everything else is excluded with a recorded reason.
+
+**Expect a small checkable fraction — this is by design, not a malfunction.** In
+the published run only **1.1% of extracted rows were checkable** (516 of 45,724).
+Baseline tables are dominated by continuous measures — age, BMI, height, weight,
+lab values — and GRIM cannot evaluate any of them, because a continuous mean is
+always arithmetically reachable. The test only applies to integer-valued measures:
+psychometric instruments and severity scores.
+
+A consequence worth knowing before your first run: **a small test run will
+typically report zero or near-zero checkable rows**, and `flagged: n/a - nothing
+was checkable` is the correct output for a handful of papers, not an error. Expect
+to need a few hundred papers before GRIM has anything to say, and a few thousand
+before the flag rate is stable.
 
 ## Results
 

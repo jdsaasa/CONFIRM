@@ -98,6 +98,10 @@ INTEGER_RE = re.compile(
     r"|children|parity|gravida|gravidity|medications?|cigarettes?"
     r"|falls?|births?|attempts?|items?|steps?)\b", re.I)
 
+# Generated output goes here, never to the repo root, so a fresh run cannot
+# overwrite the committed results of the published run.
+RESULTS_DIR = Path("results")
+
 # Valid total-score ranges for named instruments, plus an optional threshold below
 # which a reported mean is more likely a per-item or subscale average than a total.
 #
@@ -240,9 +244,11 @@ def grim(mean: str, n: int) -> tuple[bool, str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--data", type=Path, default=Path("extracted_data.csv"))
-    parser.add_argument("--out", type=Path, default=Path("grim_results.csv"))
+    parser.add_argument("--data", type=Path,
+                        default=RESULTS_DIR / "extracted_data.csv")
+    parser.add_argument("--out", type=Path, default=RESULTS_DIR / "grim_results.csv")
     args = parser.parse_args()
+    args.out.parent.mkdir(parents=True, exist_ok=True)
 
     if not args.data.exists():
         print(f"{args.data} not found", file=sys.stderr)

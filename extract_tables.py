@@ -31,6 +31,10 @@ from pathlib import Path
 
 # Captions that identify a baseline table. Matches the survey that reported
 # 677/947 papers, so the yield here is comparable to that figure.
+# Generated output goes here, never to the repo root, so a fresh run cannot
+# overwrite the committed results of the published run.
+RESULTS_DIR = Path("results")
+
 BASELINE_RE = re.compile(
     r"baseline|demographic|patient characteristic|participant characteristic"
     r"|clinical characteristic|subject characteristic", re.I)
@@ -426,15 +430,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--indir", type=Path, default=Path("raw_papers"))
-    parser.add_argument("--out", type=Path, default=Path("extracted_data.csv"))
-    parser.add_argument("--skipped", type=Path, default=Path("skipped_papers.csv"))
+    parser.add_argument("--out", type=Path, default=RESULTS_DIR / "extracted_data.csv")
+    parser.add_argument("--skipped", type=Path,
+                        default=RESULTS_DIR / "skipped_papers.csv")
     parser.add_argument("--unverified", type=Path,
-                        default=Path("unverified_cells.csv"),
+                        default=RESULTS_DIR / "unverified_cells.csv",
                         help="ambiguous cells whose group has no sample size")
     parser.add_argument("--borderline", type=Path,
-                        default=Path("borderline_rows.csv"),
+                        default=RESULTS_DIR / "borderline_rows.csv",
                         help="rows kept but matched only by the widened tolerance")
     args = parser.parse_args()
+    for path in (args.out, args.skipped, args.unverified, args.borderline):
+        path.parent.mkdir(parents=True, exist_ok=True)
 
     files = sorted(args.indir.glob("*.xml"))
     if not files:

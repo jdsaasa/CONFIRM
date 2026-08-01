@@ -16,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import csv
 import os
 import re
 import sys
@@ -25,6 +26,10 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import requests
+
+# Generated output goes here, never to the repo root, so a fresh run cannot
+# overwrite the committed results of the published run.
+RESULTS_DIR = Path("results")
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 TOOL_NAME = "rct-screener"
@@ -232,6 +237,9 @@ def main() -> int:
                         help="output directory (default: raw_papers)")
     parser.add_argument("--overwrite", action="store_true",
                         help="re-download articles already present in outdir")
+    parser.add_argument("--failed", type=Path,
+                        default=RESULTS_DIR / "failed_papers.csv",
+                        help="log of papers that could not be downloaded")
     parser.add_argument("--mindate", help="earliest publication date, e.g. 2024/01/01")
     parser.add_argument("--maxdate", help="latest publication date, e.g. 2024/12/31")
     args = parser.parse_args()
@@ -274,12 +282,15 @@ def main() -> int:
     print()
 
     saved = skipped = failed = 0
+    failures: list[dict] = []
     total = len(pmid_to_pmcid)
 
     for i, (pmid, pmcid) in enumerate(pmid_to_pmcid.items(), start=1):
         if not re.fullmatch(r"PMC\d+", pmcid):      # guard against odd filenames
             print(f"[{i}/{total}] {pmcid}: unexpected PMCID format, skipping",
                   file=sys.stderr)
+            failures.append({"pmcid": pmcid, "pmid": pmid,
+                             "reason": "unexpected PMCID format"})
             failed += 1
             continue
 
@@ -292,6 +303,7 @@ def main() -> int:
             xml = fetch_article_xml(client, pmcid)
         except (RuntimeError, ValueError, ET.ParseError, requests.HTTPError) as exc:
             print(f"[{i}/{total}] {pmcid} (PMID {pmid}): {exc}", file=sys.stderr)
+            failures.append({"pmcid": pmcid, "pmid": pmid, "reason": str(exc)})
             failed += 1
             continue
 
@@ -299,8 +311,15 @@ def main() -> int:
         saved += 1
         print(f"[{i}/{total}] saved {target} ({len(xml):,} bytes)")
 
+    args.failed.parent.mkdir(parents=True, exist_ok=True)
+    with args.failed.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["pmcid", "pmid", "reason"])
+        writer.writeheader()
+        writer.writerows(failures)
+
     print(f"\nDone. saved={saved} already-present={skipped} failed={failed} "
           f"-> {args.outdir.resolve()}")
+    print(f"failure log: {len(failures)} rows -> {args.failed}")
     return 0
 
 

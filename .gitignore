@@ -5,10 +5,14 @@ __pycache__/
 .pytest_cache/
 data/
 raw_papers/
+# Fresh runs write here; the committed results at the repo root stay untouched.
+results/
 *.csv
 # Tracked exceptions: primary outputs plus the artifacts the docs point readers at.
-!extracted_data.csv
-!grim_results.csv
-!failed_papers.csv
-!unverified_cells.csv
+# Anchored with a leading slash so they apply only at the repo root -- an
+# unanchored pattern would also un-ignore results/extracted_data.csv and friends.
+!/extracted_data.csv
+!/grim_results.csv
+!/failed_papers.csv
+!/unverified_cells.csv
 .env
