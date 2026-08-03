@@ -14,8 +14,8 @@ authors:
     orcid: "https://orcid.org/0009-0005-9793-9659"
 repository-code: "https://github.com/koridoesstuff/CONFIRM"
 license: MIT
-version: 1.0.0
-date-released: "2026-07-31"
+version: 1.0.1
+date-released: "2026-08-03"
 keywords:
   - randomized controlled trials
   - baseline tables

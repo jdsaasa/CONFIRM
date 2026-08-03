@@ -12,7 +12,7 @@ stage reads, so stages can be re-run separately.
 CSVs at the repo root (`extracted_data.csv`, `grim_results.csv`,
 `failed_papers.csv`, `unverified_cells.csv`) are the committed record of the
 published 9,698-paper run and are never written to. Running the pipeline cannot
-overwrite them.
+overwrite them. `grim_results_corrected.csv` is the corrected re-run of the same data and is also never written to — see "Correction to the v1.0 results" in `FINDINGS.md`.
 
 ## Setup
 

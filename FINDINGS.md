@@ -115,5 +115,5 @@ fact reachable.
 
 From v1.1 onward a mean is treated as unreachable only if it is unreachable under
 both conventions. The original v1.0 output is retained unchanged in
-`grim_results.csv`; the corrected run is in `grim_results_v11.csv`. The
+`grim_results.csv`; the corrected run is in `grim_results_corrected.csv`. The
 script that identified the artifacts is in `audit/`.
