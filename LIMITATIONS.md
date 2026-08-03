@@ -76,7 +76,7 @@ need to change to remove it. Papers are cited by PMCID where applicable.
   PMC13259180 (16 rows; same variable at two timepoints), PMC13355162 (16 rows).
   *Code:* divider handling in `extract()` in `extract_tables.py`.
 
-- **GRIM reaches only 516 of 45,724 rows (1.1%).** The 13.8% flag rate rests on
+- **GRIM reaches only 516 of 45,724 rows (1.1%).** The 13.0% flag rate rests on
   that denominator. Baseline tables
   are dominated by continuous measures (age, BMI, height, weight, labs) that GRIM
   cannot evaluate by construction; the test only bites on integer instruments and
@@ -85,7 +85,7 @@ need to change to remove it. Papers are cited by PMCID where applicable.
   subscale or per-item averages, 11 means outside their instrument's valid range.
   Coverage grows only by naming more instruments with certainty, not by loosening
   the classifier.
-  *Examples:* the 71 flags span 33 papers; PMC13296589 (7) and PMC12660629 (5) are
+  *Examples:* the 67 flags span 30 papers; PMC13296589 (7) and PMC12660629 (5) are
   the largest contributors, so the rate is not driven by any single table.
   *Code:* `NAMED_SCORE_RE` and the not-applicable branches in `grim_check.py`.
 
@@ -98,7 +98,7 @@ need to change to remove it. Papers are cited by PMCID where applicable.
   period (steps/day over a week, cigarettes/day over a month), which makes each
   patient's value non-integer and again puts them outside GRIM's assumptions.
   These reach the checkable set through the generic count tier (`counts?`,
-  `cigarettes?`, `steps?`) and account for 7 of the 71 current flags (3 + 2 + 2),
+  `cigarettes?`, `steps?`) and account for 7 of the 67 current flags (3 + 2 + 2),
   which should therefore be treated as unverified rather than as findings. The
   generic tier admits 14 flags in total; the other 7 — number of hospitalizations,
   Modified Falls Efficacy Scale, UPDRS limb items, training sessions attended —

@@ -32,7 +32,7 @@ import math
 import re
 import sys
 from collections import Counter
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_EVEN, ROUND_HALF_UP
 from pathlib import Path
 
 # Units and terms implying a measure on a continuous scale: GRIM cannot apply.
@@ -231,13 +231,16 @@ def grim(mean: str, n: int) -> tuple[bool, str]:
     base = math.floor(float(mean) * n)
     best, best_gap = None, None
     for total in (base - 1, base, base + 1):
-        candidate = (Decimal(total) / Decimal(n)).quantize(quant,
-                                                           rounding=ROUND_HALF_UP)
-        if candidate == target:
-            return True, str(candidate)
-        gap = abs(candidate - target)
-        if best_gap is None or gap < best_gap:
-            best, best_gap = candidate, gap
+        quotient = Decimal(total) / Decimal(n)
+        # Journals differ in rounding convention. A mean is only unreachable if it
+        # is unreachable under BOTH half-up and half-even (banker's) rounding.
+        for mode in (ROUND_HALF_UP, ROUND_HALF_EVEN):
+            candidate = quotient.quantize(quant, rounding=mode)
+            if candidate == target:
+                return True, str(candidate)
+            gap = abs(candidate - target)
+            if best_gap is None or gap < best_gap:
+                best, best_gap = candidate, gap
     return False, str(best)
 
 

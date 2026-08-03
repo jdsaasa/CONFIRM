@@ -8,19 +8,23 @@ Papers are cited by PMCID. Same convention as `LIMITATIONS.md`.
 
 **Corpus: 9,698 papers** (the first 9,999 PMIDs of the query, less publisher-blocked
 records), yielding 45,724 extracted rows from 2,800 papers with usable baseline
-tables. Of **516 checkable rows, 71 are flagged (13.8%)**, across 33 papers.
+tables. Of **516 checkable rows, 67 are flagged (13.0%)**, across 30 papers.
 
-The ten flags below were investigated during the initial 947-paper corpus and all
-survive unchanged in the full run:
+Ten flags were investigated during the initial 947-paper corpus. Nine survive
+unchanged in the full run; the BDI flag was later withdrawn as a rounding
+artifact (see "Correction to the v1.0 results" below):
 
 Charlson Comorbidity Index ×4 and APACHE II ×3 (both in PMC13296589, both
 corroborated by an independent pooled-column check beyond GRIM alone — see
 flagship entry), PHQ-9 ×1 (PMC13370186), Day 7 MADRS ×1 (PMC13389161 — see MADRS
-entry), BDI ×1 (PMC13260263). PHQ-9 and BDI flags are confirmed unreachable by
-GRIM and hand-verified arithmetically, but have not been investigated further
-beyond that.
+entry), BDI ×1 (PMC13260263). The PHQ-9 flag is confirmed unreachable by GRIM 
+and hand-verified arithmetically,
+but has not been investigated further beyond
+that. The BDI flag was withdrawn: the
+mean is reachable under round-half-even
+rounding.
 
-**61 of the 71 flags are uninvestigated.** They are arithmetically confirmed
+**58 of the 67 flags are uninvestigated.** They are arithmetically confirmed
 unreachable but nothing further is known about them. Papers with the most flags:
 PMC13296589 (7), PMC12660629 (5), PMC12625294 (4), PMC12625497 (4). Do not treat
 the uninvestigated flags as findings — the MADRS entry below shows how readily a
@@ -34,9 +38,9 @@ hand, but not examined beyond that):
 | Flag | n | Mean | Nearest reachable values | Verdict |
 | --- | --- | --- | --- | --- |
 | PHQ-9, PMC13370186, Waitlist | 44 | 9.38 | 412/44 = 9.36, 413/44 = 9.39 | unreachable |
-| BDI, PMC13260263, arm T | 8 | 9.2 | 73/8 = 9.1, 74/8 = 9.3 | unreachable |
+| BDI, PMC13260263, arm T | 8 | 9.2 | 74/8 = 9.25 | withdrawn — see correction |
 
-The 13.8% rate rests on a denominator of 516 — 1.1% of all extracted rows. See
+The 13.0% rate rests on a denominator of 516 — 1.1% of all extracted rows. See
 `LIMITATIONS.md` on GRIM's narrow reach.
 
 ## Flagship finding — PMC13296589, Table 3
@@ -88,3 +92,28 @@ the discrepancy to this one cell. On the SD: maximum attainable SD for a 0–60
 scale at mean 15.57 is 26.30 (population) or 27.47 (sample, n−1), so 21.3 sits at
 77.5% of the maximum; an integer sample such as [60, 60, 6×10] yields mean 15.00,
 SD 21.02.
+
+## Correction to the v1.0 results
+
+The v1.0 run reported 71 flagged rows of 516 checkable (13.8%) across 33 papers.
+A subsequent audit found four of those flags to be artifacts of the rounding
+convention used by the check, not reporting inconsistencies.
+
+GRIM in v1.0 assessed reachability under round-half-up only. Where a journal
+rounds using round-half-even (banker's rounding), a quotient ending in exactly 5
+at the next decimal place rounds down rather than up, and the reported mean is in
+fact reachable.
+
+| PMCID | Variable | n | Reported mean | Reachable as |
+|---|---|---|---|---|
+| PMC12641942 | MMSE | 8 | 26.2 | 210/8 = 26.25 |
+| PMC13103870 | Charlson comorbidity index | 40 | 3.72 | 149/40 = 3.725 |
+| PMC13175143 | GAD-7 | 80 | 9.12 | 730/80 = 9.125 |
+| PMC13260263 | BDI | 8 | 9.2 | 74/8 = 9.25 |
+
+**Corrected v1.0 result: 67 flagged rows of 516 checkable (13.0%) across 30 papers.**
+
+From v1.1 onward a mean is treated as unreachable only if it is unreachable under
+both conventions. The original v1.0 output is retained unchanged in
+`grim_results.csv`; the corrected run is in `grim_results_v11.csv`. The
+script that identified the artifacts is in `audit/`.
