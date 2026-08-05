@@ -94,7 +94,7 @@ size is known, and `n < 10^decimals` so the test has discriminating power.
 Everything else is excluded with a recorded reason.
 
 **Expect a small checkable fraction — this is by design, not a malfunction.** In
-the published run only **1.1% of extracted rows were checkable** (516 of 45,724).
+the published run only **1.1% of extracted rows were checkable** (509 of 45,724).
 Baseline tables are dominated by continuous measures — age, BMI, height, weight,
 lab values — and GRIM cannot evaluate any of them, because a continuous mean is
 always arithmetically reachable. The test only applies to integer-valued measures:
@@ -117,7 +117,7 @@ too, which pins the SD to a discrete set of reachable values.
 GRIMMER reaches rows GRIM cannot. GRIM loses all power once the sample is
 large enough that every reported mean is achievable (n >= 10^decimals); the
 SD stays discrete well past that point. Across the published corpus GRIM is
-checkable on 510 rows and GRIMMER on 1,516.
+checkable on 509 rows and GRIMMER on 1,496.
 
 Rows whose mean already fails GRIM are excluded here rather than reported
 twice, so the two flag counts do not overlap.

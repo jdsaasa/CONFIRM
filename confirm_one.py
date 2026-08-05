@@ -4,8 +4,12 @@ The bulk pipeline answers "which of these thousands of papers is worth a
 look". This answers "what does the arithmetic say about this one paper",
 which is the question a reviewer working through INSPECT-SR check 4.8 has.
 
-It shells out to the three existing stages rather than reimplementing them,
-so the verified code path is the one that runs.
+Both tests are run. GRIM constrains the reported mean; GRIMMER applies the
+same argument to the standard deviation and reaches rows GRIM cannot, since
+the SD stays discrete at sample sizes where the mean does not.
+
+It shells out to the existing stages rather than reimplementing them, so the
+verified code path is the one that runs.
 
 Usage:
     python confirm_one.py 42345586          # PMID
@@ -47,7 +51,6 @@ def clean_label(label: str) -> str:
     return s or label
 
 
-
 def build_query(identifier: str) -> str:
     """PubMed query for one article, from either identifier form."""
     ident = identifier.strip()
@@ -73,7 +76,6 @@ def neighbours(mean: str, n: int) -> tuple[str, str, int, int]:
     d = len(mean.partition(".")[2])
     quant = Decimal(1).scaleb(-d)
     lo = math.floor(float(mean) * n)
-    # step out until the pair genuinely brackets the reported value
     while (Decimal(lo) / Decimal(n)).quantize(quant, rounding=ROUND_HALF_UP) > Decimal(mean):
         lo -= 1
     hi = lo + 1
@@ -82,33 +84,50 @@ def neighbours(mean: str, n: int) -> tuple[str, str, int, int]:
     return str(lo_v), str(hi_v), lo, hi
 
 
-def report(rows: list[dict], identifier: str) -> None:
+def split(rows: list[dict]) -> tuple[list, list, list]:
     flagged = [r for r in rows if r["category"] == "checked-flagged"]
     passed = [r for r in rows if r["category"] == "checked-passed"]
     excluded = [r for r in rows if r["category"] == "not-applicable"]
-    checkable = len(flagged) + len(passed)
+    return flagged, passed, excluded
+
+
+def exclusion_counts(excluded: list[dict]) -> list[tuple[str, int]]:
+    reasons: dict[str, int] = {}
+    for r in excluded:
+        key = r["reason"].replace("not applicable - ", "")
+        reasons[key] = reasons.get(key, 0) + 1
+    return sorted(reasons.items(), key=lambda kv: -kv[1])
+
+
+def report(grim_rows: list[dict], grimmer_rows: list[dict],
+           identifier: str) -> None:
+    g_flag, g_pass, g_excl = split(grim_rows)
+    m_flag, m_pass, m_excl = split(grimmer_rows)
+    g_check = len(g_flag) + len(g_pass)
+    m_check = len(m_flag) + len(m_pass)
+    total = len(grim_rows)
 
     print()
     print("CONFIRM - single-trial check")
-    print("=" * 60)
+    print("=" * 62)
     print(f"Paper:  {identifier}")
-    print(f"Rows extracted from the baseline table:  {len(rows)}")
+    print(f"Rows extracted from the baseline table:  {total}")
     print()
-    print("GRIM (INSPECT-SR check 4.8)")
-    print("-" * 60)
 
-    if checkable == 0:
+    # ---- GRIM -------------------------------------------------------------
+    print("GRIM - reported means (INSPECT-SR check 4.8)")
+    print("-" * 62)
+    if g_check == 0:
         print("No rows were checkable, so GRIM was not applied to this paper.")
-        print("This is not a clean result: it means the test could not run.")
-    elif not flagged:
-        print(f"No inconsistencies found. {checkable} of {len(rows)} rows were")
-        print(f"checkable; all {checkable} report a mean reachable at the stated")
-        print("sample size.")
+        print("That is not a clean result: it means the test could not run.")
+    elif not g_flag:
+        print(f"No inconsistencies found. {g_check} of {total} rows were checkable;")
+        print(f"all {g_check} report a mean reachable at the stated sample size.")
     else:
-        print(f"{len(flagged)} of {checkable} checkable rows report a mean that is not")
+        print(f"{len(g_flag)} of {g_check} checkable rows report a mean that is not")
         print("reachable at the stated sample size:")
         print()
-        for r in flagged:
+        for r in g_flag:
             n = int(r["n"])
             lo_v, hi_v, lo_t, hi_t = neighbours(r["mean"], n)
             print(f"  {r['variable']}")
@@ -117,23 +136,48 @@ def report(rows: list[dict], identifier: str) -> None:
                   f"{lo_t}/{n} = {lo_v} and {hi_t}/{n} = {hi_v}")
             print()
 
+    # ---- GRIMMER ----------------------------------------------------------
+    print("GRIMMER - reported standard deviations (INSPECT-SR check 4.8)")
+    print("-" * 62)
+    if m_check == 0:
+        print("No rows were checkable, so GRIMMER was not applied to this paper.")
+        print("That is not a clean result: it means the test could not run.")
+    elif not m_flag:
+        print(f"No inconsistencies found. {m_check} of {total} rows were checkable;")
+        print(f"all {m_check} report an SD reachable at the stated sample size.")
+    else:
+        print(f"{len(m_flag)} of {m_check} checkable rows report a standard deviation")
+        print("that no set of integers can produce at the stated sample size:")
+        print()
+        for r in m_flag:
+            print(f"  {r['variable']}")
+            print(f"    group {clean_label(r['group'])!r}, n = {r['n']}")
+            print(f"    reported mean {r['mean']}, SD {r['sd']}")
+            print()
+
+    # ---- coverage ---------------------------------------------------------
     print("Coverage")
-    print("-" * 60)
-    print(f"{len(rows)} rows extracted, of which {checkable} were checkable.")
-    if excluded:
-        print(f"{len(excluded)} excluded and not tested:")
-        reasons: dict[str, int] = {}
-        for r in excluded:
-            key = r["reason"].replace("not applicable - ", "")
-            reasons[key] = reasons.get(key, 0) + 1
-        for reason, count in sorted(reasons.items(), key=lambda kv: -kv[1]):
-            print(f"    {count:4}  {reason}")
+    print("-" * 62)
+    print(f"{total} rows extracted from the table.")
     print()
-    print("GRIM applies only to measures that can take integer values, at")
-    print("sample sizes small enough for the test to discriminate. Excluded")
-    print("rows have not been tested and no conclusion should be drawn about")
-    print("them. A flagged mean means the reported value is not reachable as")
-    print("a mean of integers at the stated n; it does not by itself indicate")
+    print(f"  GRIM:     {g_check:4} checkable, {len(g_excl):4} excluded")
+    for reason, count in exclusion_counts(g_excl):
+        print(f"              {count:4}  {reason}")
+    print()
+    print(f"  GRIMMER:  {m_check:4} checkable, {len(m_excl):4} excluded")
+    for reason, count in exclusion_counts(m_excl):
+        print(f"              {count:4}  {reason}")
+    print()
+    print("Both tests apply only to measures that can take integer values.")
+    print("GRIM additionally needs a sample small enough for the reachable")
+    print("means to be spaced further apart than the reported precision;")
+    print("GRIMMER has no such ceiling, so it reaches rows GRIM cannot.")
+    print("Rows whose mean already fails GRIM are excluded from GRIMMER")
+    print("rather than reported twice.")
+    print()
+    print("Excluded rows have not been tested and no conclusion should be")
+    print("drawn about them. A flag means the reported value is not reachable")
+    print("from integer data at the stated n; it does not by itself indicate")
     print("the cause.")
     print()
 
@@ -152,6 +196,7 @@ def main() -> int:
     xml_dir = workdir / "xml"
     data_csv = workdir / "extracted.csv"
     grim_csv = workdir / "grim.csv"
+    grimmer_csv = workdir / "grimmer.csv"
 
     try:
         print(f"fetching {args.identifier} ...", file=sys.stderr)
@@ -187,12 +232,17 @@ def main() -> int:
             print("the table's structure could not be parsed.")
             return 1
 
-        print("running the GRIM check ...", file=sys.stderr)
+        print("running GRIM ...", file=sys.stderr)
         run([sys.executable, "grim_check.py", "--data", str(data_csv),
              "--out", str(grim_csv)])
 
-        rows = list(csv.DictReader(grim_csv.open(encoding="utf-8")))
-        report(rows, xml_files[0].stem)
+        print("running GRIMMER ...", file=sys.stderr)
+        run([sys.executable, "grimmer_check.py", "--data", str(data_csv),
+             "--out", str(grimmer_csv)])
+
+        grim_rows = list(csv.DictReader(grim_csv.open(encoding="utf-8")))
+        grimmer_rows = list(csv.DictReader(grimmer_csv.open(encoding="utf-8")))
+        report(grim_rows, grimmer_rows, xml_files[0].stem)
         return 0
 
     finally:

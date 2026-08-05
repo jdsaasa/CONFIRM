@@ -96,7 +96,7 @@ INTEGER_RE = re.compile(
     # and named indices like Charlson are handled in tier 1.
     r"\b(number of|no\.? of|count of|counts?|episodes?|visits?|sessions?"
     r"|children|parity|gravida|gravidity|medications?|cigarettes?"
-    r"|falls?|births?|attempts?|items?|steps?)\b", re.I)
+    r"|falls?|attempts?|items?|steps?)\b", re.I)
 
 # Generated output goes here, never to the repo root, so a fresh run cannot
 # overwrite the committed results of the published run.

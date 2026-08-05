@@ -13,7 +13,7 @@ need to change to remove it. Papers are cited by PMCID where applicable.
   "medications") was inherited onto `QUICKI` (~0.32) and `EQ-5D scale score`
   (~0.54), both continuous. Fixed by making the fallback able to EXCLUDE a row
   but never ADMIT one: it may return "continuous", never "integer". Verified after
-  the fix: 0 of 516 checkable rows derive their verdict from prefix text.
+  the fix: 0 of the 516 checkable rows at v1.0 derive their verdict from prefix text.
   Residual cost: genuine integer subscales such as PMC12538054's
   `SPPB, mean (SD) - Walk (0−4)` are now excluded as "unknown" rather than tested,
   which is the conservative direction.
@@ -76,14 +76,14 @@ need to change to remove it. Papers are cited by PMCID where applicable.
   PMC13259180 (16 rows; same variable at two timepoints), PMC13355162 (16 rows).
   *Code:* divider handling in `extract()` in `extract_tables.py`.
 
-- **GRIM reaches only 510 of 45,724 rows (1.1%).** The 13.1% flag rate rests on
+- **GRIM reaches only 509 of 45,724 rows (1.1%).** The 13.2% flag rate rests on
   that denominator. Baseline tables
   are dominated by continuous measures (age, BMI, height, weight, labs) that GRIM
   cannot evaluate by construction; the test only bites on integer instruments and
-  severity scores. Excluded: 23,157 continuous, 14,807 measure type unknown, 5,663
-  no sample size, 1,073 no discriminating power (n >= 10^decimals), 490 median/IQR
+  severity scores. Excluded: 23,157 continuous, 14,827 measure type unknown, 5,663
+  no sample size, 1,054 no discriminating power (n >= 10^decimals), 490 median/IQR
   rather than mean/SD, 13 likely subscale or per-item averages, 11 means outside
-  their instrument's valid range. GRIMMER (v1.1) reaches 1,516 rows, since the SD
+  their instrument's valid range. GRIMMER (v1.1) reaches 1,496 rows, since the SD
   stays discrete at sample sizes where the mean does not.
   Coverage grows by naming more instruments with certainty and by adding tests
   with different reach, not by loosening the classifier.
@@ -105,6 +105,12 @@ need to change to remove it. Papers are cited by PMCID where applicable.
   generic tier admits 14 flags in total; the other 7 — number of hospitalizations,
   Modified Falls Efficacy Scale, UPDRS limb items, training sessions attended —
   are genuine per-observation integer counts and are not in doubt.
+
+  A related case was fixed in v1.1.1: "Gestational week at birth" reached the
+  checkable set because the generic tier matched `births?` on "at birth" used
+  as a timepoint rather than as a count. That term is now removed; genuine
+  birth counts are still caught by `number of` and `parity`.
+  
   *Examples:* PMC12508196 (`Ultrafiltration of the studied hemodialysis session,
   L`, 3 flags), PMC12677381 (`Steps, mean (SD)`, 2 flags), PMC12885348
   (`Cigarettes per day, n`, 2 flags).
@@ -112,8 +118,8 @@ need to change to remove it. Papers are cited by PMCID where applicable.
   removing those terms from the generic tier or requiring a per-observation
   qualifier — both trade coverage for correctness.
 
-- **The subscale exclusion rule applies to flagged and passed rows alike, by
-  design.** When a named instrument's mean falls below its subscale threshold, the
+- **The subscale exclusion rule applies to flagged and passed rows alike, by design.** 
+  When a named instrument's mean falls below its subscale threshold, the
   row is excluded regardless of whether GRIM would have flagged or passed it. This
   is deliberate: a rule that suppressed only flags would be outcome-dependent,
   systematically lowering the flag rate while leaving equally-suspect passing rows
@@ -140,6 +146,17 @@ need to change to remove it. Papers are cited by PMCID where applicable.
   denominator (all passed, so no finding was affected) and one was flagged by
   GRIMMER. A guard now excludes them and logs the reason.
   *Code:* `MEDIAN_RE` in `grim_check.py`.
+
+- **GRIMMER assumes the sample SD (n−1 denominator).** Trials almost always
+  report the sample SD, but a paper using the population SD (n denominator)
+  would have its rows tested against the wrong ladder. At least one flag —
+  MMSE TCG in PMC12815704 — is reachable under the population convention and
+  should be treated as unresolved rather than as a finding. The same caveat
+  applies to all 33 flags. `audit/sd_check.py` shows the working for any single
+  row under both conventions. Accepting a value reachable under either
+  denominator, as `grim()` now does for rounding, would remove the assumption
+  at some cost in detection.
+  *Code:* `grimmer()` in `grimmer_check.py`.
 
 - **Duration measurement granularity remains unresolved for two papers.** Duration
   measurement granularity for PMC13250868 (ICU stay) and PMC13318024 (disease

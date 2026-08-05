@@ -8,14 +8,17 @@ Papers are cited by PMCID. Same convention as `LIMITATIONS.md`.
 
 **Corpus: 9,698 papers** (the first 9,999 PMIDs of the query, less publisher-blocked
 records), yielding 45,724 extracted rows from 2,800 papers with usable baseline
-tables. Of **510 checkable rows, 67 are flagged (13.1%)**, across 30 papers.
+tables. Of **509 checkable rows, 67 are flagged (13.2%)**, across 30 papers.
 
 GRIMMER, added in v1.1, tests the standard deviation on the same principle.
-It is checkable on 1,516 rows and flags 34 across 27 papers, none of which
+It is checkable on 1,496 rows and flags 33 across 27 papers, none of which
 overlap the GRIM flags. Two fall in PMC13296589, on rows that pass GRIM:
 SPPB in the exercise arm (n = 12, mean 8.75, SD 1.55) and GAD-7 in the
 COMBAT-ICU arm (n = 13, mean 3.77, SD 2.00). Both were confirmed by
-enumerating every achievable sum of squares within the instrument's range.
+enumerating every achievable sum of squares within the instrument's range,
+and both remain unreachable under the population-SD convention as well.
+Three more fall in PMC12815704, where GRIM finds nothing at all — see the
+GRIMMER finding below.
 
 Ten flags were investigated during the initial 947-paper corpus. Nine survive
 unchanged in the full run; the BDI flag was later withdrawn as a rounding
@@ -39,15 +42,15 @@ confirmed-unreachable mean dissolves under one plausible attrition scenario, and
 `LIMITATIONS.md` lists flags that survive only because their measure type is still
 misclassified.
 
-Arithmetic for the two least-investigated of the ten (confirmed unreachable by
-hand, but not examined beyond that):
+Arithmetic for the two of the ten confirmed by hand but not examined further
+(the BDI row has since been withdrawn):
 
 | Flag | n | Mean | Nearest reachable values | Verdict |
 | --- | --- | --- | --- | --- |
 | PHQ-9, PMC13370186, Waitlist | 44 | 9.38 | 412/44 = 9.36, 413/44 = 9.39 | unreachable |
 | BDI, PMC13260263, arm T | 8 | 9.2 | 74/8 = 9.25 | withdrawn — see correction |
 
-The 13.0% rate rests on a denominator of 516 — 1.1% of all extracted rows. See
+The 13.2% rate rests on a denominator of 509 — 1.1% of all extracted rows. See
 `LIMITATIONS.md` on GRIM's narrow reach.
 
 ## Flagship finding — PMC13296589, Table 3
@@ -99,6 +102,35 @@ the discrepancy to this one cell. On the SD: maximum attainable SD for a 0–60
 scale at mean 15.57 is 26.30 (population) or 27.47 (sample, n−1), so 21.3 sits at
 77.5% of the maximum; an integer sample such as [60, 60, 6×10] yields mean 15.00,
 SD 21.02.
+
+## GRIMMER finding — PMC12815704, Table 1
+
+All three MMSE arms report a standard deviation that no set of integer scores
+can produce at the stated sample size, under the standard sample-SD convention.
+GRIM passes every checkable row in this paper, so v1.0 would not have surfaced
+it.
+
+| Group | n | Reported | Nearest achievable |
+|---|---|---|---|
+| CG | 28 | 24.50 (2.00) | 1.99 and 2.01 |
+| TCG | 28 | 25.00 (1.75) | 1.74 and 1.76 |
+| TCOG | 29 | 25.00 (1.50) | 1.49 and 1.51 |
+
+Each was confirmed by enumerating every achievable sum of squares for n integer
+scores in the MMSE range 0–30 summing to the implied total: 1,781 for CG, 1,630
+for TCG, 1,708 for TCOG. In each case the reported SD falls between two adjacent
+achievable values rather than on one. Values verified against the published
+Table 1.
+
+The MMSE's 0–30 range is not load-bearing: the values remain unreachable when
+the range constraint is dropped entirely. The SD convention is load-bearing for
+one arm — TCG's 1.75 is reachable if the SD was computed with an n denominator
+rather than n−1. CG and TCOG remain unreachable under either convention, and no
+single convention accounts for all three.
+
+Separately, every mean and SD in the row is a multiple of 0.25 (24.50, 25.00,
+25.00; 2.00, 1.75, 1.50), which INSPECT-SR check 4.3 lists as a marker worth
+noting. That observation is independent of GRIMMER.
 
 ## Correction to the v1.0 results
 
