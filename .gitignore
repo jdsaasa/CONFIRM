@@ -18,3 +18,5 @@ results/
 !/failed_papers.csv
 !/unverified_cells.csv
 .env
+check_paper/
+one_paper/
