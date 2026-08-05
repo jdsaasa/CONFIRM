@@ -76,15 +76,17 @@ need to change to remove it. Papers are cited by PMCID where applicable.
   PMC13259180 (16 rows; same variable at two timepoints), PMC13355162 (16 rows).
   *Code:* divider handling in `extract()` in `extract_tables.py`.
 
-- **GRIM reaches only 516 of 45,724 rows (1.1%).** The 13.0% flag rate rests on
+- **GRIM reaches only 510 of 45,724 rows (1.1%).** The 13.1% flag rate rests on
   that denominator. Baseline tables
   are dominated by continuous measures (age, BMI, height, weight, labs) that GRIM
   cannot evaluate by construction; the test only bites on integer instruments and
-  severity scores. Excluded: 23,326 continuous, 15,075 measure type unknown, 5,663
-  no sample size, 1,120 no discriminating power (n ≥ 10^decimals), 13 likely
-  subscale or per-item averages, 11 means outside their instrument's valid range.
-  Coverage grows only by naming more instruments with certainty, not by loosening
-  the classifier.
+  severity scores. Excluded: 23,157 continuous, 14,807 measure type unknown, 5,663
+  no sample size, 1,073 no discriminating power (n >= 10^decimals), 490 median/IQR
+  rather than mean/SD, 13 likely subscale or per-item averages, 11 means outside
+  their instrument's valid range. GRIMMER (v1.1) reaches 1,516 rows, since the SD
+  stays discrete at sample sizes where the mean does not.
+  Coverage grows by naming more instruments with certainty and by adding tests
+  with different reach, not by loosening the classifier.
   *Examples:* the 67 flags span 30 papers; PMC13296589 (7) and PMC12660629 (5) are
   the largest contributors, so the rate is not driven by any single table.
   *Code:* `NAMED_SCORE_RE` and the not-applicable branches in `grim_check.py`.
@@ -130,6 +132,14 @@ need to change to remove it. Papers are cited by PMCID where applicable.
   accepted cost of applying it symmetrically. Across the corpus the rule excluded
   13 rows: 6 flagged, 6 passed, 1 already excluded.
   *Code:* `INSTRUMENT_SPECS` / `range_verdict()` in `grim_check.py`.
+
+- **Median/IQR rows were tested as though they were mean/SD until v1.1.** A label
+  such as "PHQ-9 [median (IQR)]" matched the instrument classifier and reached
+  the checkable set. Neither test applies to a median, which is an order
+  statistic rather than a sum divided by n. Six such rows sat inside the GRIM
+  denominator (all passed, so no finding was affected) and one was flagged by
+  GRIMMER. A guard now excludes them and logs the reason.
+  *Code:* `MEDIAN_RE` in `grim_check.py`.
 
 - **Duration measurement granularity remains unresolved for two papers.** Duration
   measurement granularity for PMC13250868 (ICU stay) and PMC13318024 (disease

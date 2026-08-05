@@ -8,7 +8,14 @@ Papers are cited by PMCID. Same convention as `LIMITATIONS.md`.
 
 **Corpus: 9,698 papers** (the first 9,999 PMIDs of the query, less publisher-blocked
 records), yielding 45,724 extracted rows from 2,800 papers with usable baseline
-tables. Of **516 checkable rows, 67 are flagged (13.0%)**, across 30 papers.
+tables. Of **510 checkable rows, 67 are flagged (13.1%)**, across 30 papers.
+
+GRIMMER, added in v1.1, tests the standard deviation on the same principle.
+It is checkable on 1,516 rows and flags 34 across 27 papers, none of which
+overlap the GRIM flags. Two fall in PMC13296589, on rows that pass GRIM:
+SPPB in the exercise arm (n = 12, mean 8.75, SD 1.55) and GAD-7 in the
+COMBAT-ICU arm (n = 13, mean 3.77, SD 2.00). Both were confirmed by
+enumerating every achievable sum of squares within the instrument's range.
 
 Ten flags were investigated during the initial 947-paper corpus. Nine survive
 unchanged in the full run; the BDI flag was later withdrawn as a rounding

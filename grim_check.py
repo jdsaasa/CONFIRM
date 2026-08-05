@@ -138,6 +138,13 @@ INSTRUMENT_SPECS = [
     (re.compile(r"\bapgar\b", re.I),                     0, 10, None),
 ]
 
+# Rows reporting a median and IQR rather than a mean and SD. Neither GRIM nor
+# GRIMMER applies to a median: it is an order statistic, not a sum divided by n.
+# "range" is deliberately absent - "(Mean +- SD)(Range)" reports a genuine mean.
+MEDIAN_RE = re.compile(r"\b(median|iqr|interquartile|q1\s*[-\u2013]\s*q3)\b", re.I)
+
+REASON_MEDIAN = "not applicable - median/IQR, not mean/SD"
+
 REASON_OUT_OF_RANGE = "not applicable - mean outside instrument range"
 REASON_SUBSCALE = "not applicable - likely subscale or per-item average"
 REASON_NO_N = "not applicable - no sample size"
@@ -269,6 +276,8 @@ def main() -> int:
 
         if not r["n"]:
             category, reason = "not-applicable", REASON_NO_N
+        elif MEDIAN_RE.search(r["variable"]):
+            category, reason = "not-applicable", REASON_MEDIAN
         elif kind == "continuous":
             category, reason = "not-applicable", REASON_CONTINUOUS
         elif kind == "unknown":

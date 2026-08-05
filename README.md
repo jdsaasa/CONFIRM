@@ -106,7 +106,23 @@ was checkable` is the correct output for a handful of papers, not an error. Expe
 to need a few hundred papers before GRIM has anything to say, and a few thousand
 before the flag rate is stable.
 
-### 4. Single trial — `confirm_one.py`
+### 4. Verify SDs — `grimmer_check.py`
+
+GRIM constrains the mean; GRIMMER applies the same argument to the standard
+deviation. If every value is an integer then the sum of squares is an integer
+too, which pins the SD to a discrete set of reachable values.
+
+    python grimmer_check.py --data extracted_data.csv --out grimmer_results_v1.1.0.csv
+
+GRIMMER reaches rows GRIM cannot. GRIM loses all power once the sample is
+large enough that every reported mean is achievable (n >= 10^decimals); the
+SD stays discrete well past that point. Across the published corpus GRIM is
+checkable on 510 rows and GRIMMER on 1,516.
+
+Rows whose mean already fails GRIM are excluded here rather than reported
+twice, so the two flag counts do not overlap.
+
+### 5. Single trial — `confirm_one.py`
 
 Runs all three stages against one paper and reports in prose rather than
 CSV, for a reviewer working through a single trial (for example
