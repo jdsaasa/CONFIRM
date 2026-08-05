@@ -106,6 +106,23 @@ was checkable` is the correct output for a handful of papers, not an error. Expe
 to need a few hundred papers before GRIM has anything to say, and a few thousand
 before the flag rate is stable.
 
+### 4. Single trial — `confirm_one.py`
+
+Runs all three stages against one paper and reports in prose rather than
+CSV, for a reviewer working through a single trial (for example
+INSPECT-SR check 4.8) rather than screening at scale:
+
+    python confirm_one.py 42345586        # PMID
+    python confirm_one.py PMC13296589     # PMCID
+
+Flagged rows are shown with the achievable values either side of each
+reported mean. The report always states how many rows were checkable,
+since "no inconsistencies found" and "nothing could be tested" are
+different results.
+
+Intermediate files go to a temporary directory and are deleted on exit;
+pass `--keep` to retain them.
+
 ## Results
 
 - **`FINDINGS.md`** — investigated findings, graded by how strongly each is
